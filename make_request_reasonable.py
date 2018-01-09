@@ -27,7 +27,8 @@ class Receipt():
 @receiver(PAYMENT_SENT)
 def fund_mbta_and_send_receipt(request):
     fund_mbta(request)
-    return render_receipt(request)
+    receipt = Receipt(request['user'], request['amount'])
+    return receipt.render_html()
 
 def fund_mbta(request):
     response = make_funding_request(request)
@@ -40,10 +41,6 @@ def fund_mbta(request):
     fund_status = response.get('payment_status')
     if status != 'success':
         raise MyException('Unsuccessful payment. LOL')
-
-def render_receipt(request):
-    receipt = Receipt(request['user'], request['amount'])
-    return receipt.render_html()
 
 def persist(data):
     # we pretend that logging data "persists" it
