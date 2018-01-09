@@ -1,6 +1,6 @@
 from datetime import datetime
 import logging
-
+from django.dispatch import receiver
 import requests
 
 
@@ -24,34 +24,30 @@ class Receipt():
             timestamp=self.timestamp
         )
 
-
+@receiver(PAYMENT_SENT)
 def fund_mbta_and_send_receipt(request):
+    fund_mbta(request)
+    return render_receipt(request)
+
+def fund_mbta(request):
     response = make_funding_request(request)
-    check_fund_response_status(response)
-
-    response_data = response.json()
-    persist(response_data)
-    check_payment_status(response)
-
-    receipt = Receipt(request['user'], request['amount'])
-    return receipt.render_html()
-
-
-def check_fund_response_status(response):
     if response.status_code >= 400:
         raise MyException('Request failed due to medical emergency at Charles/MGH')
 
+    response_data = response.json()
+    persist(response_data)
 
-def persist(data):
-    # we pretend that logging data "persists" it
-    log.warn(data)
-
-
-def check_payment_status(response):
     fund_status = response.get('payment_status')
     if status != 'success':
         raise MyException('Unsuccessful payment. LOL')
 
+def render_receipt(request):
+    receipt = Receipt(request['user'], request['amount'])
+    return receipt.render_html()
+
+def persist(data):
+    # we pretend that logging data "persists" it
+    log.warn(data)
 
 def make_funding_request(request):
     params = {

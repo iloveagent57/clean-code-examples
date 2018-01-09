@@ -1,11 +1,12 @@
 from datetime import datetime
+import logging
+from django.dispatch import receiver
 import requests
-
 
 class MyException(Exception):
     pass
 
-
+@receiver(PAYMENT_SENT)
 def fund_mbta_and_send_receipt(request):
     # make a call to fund the MBTA
     params = {
